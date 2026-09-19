@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "checked_nodes": 7,
+  "makespan_ps": 1804000,
+  "cross_die_payload_bytes": 256,
+  "completed_ps": {
+    "load0": 128000,
+    "comp0": 1128000,
+    "egress0": 1160000,
+    "fabric01": 1240000,
+    "ingress1": 1272000,
+    "comp1": 1772000,
+    "store1": 1804000
+  },
+  "scope": "static contract and ideal serial arithmetic only",
+  "self_test": {
+    "negative_cases_rejected": 12
+  }
+}

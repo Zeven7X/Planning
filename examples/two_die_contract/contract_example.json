@@ -1,0 +1,106 @@
+{
+  "schema_version": "0.1",
+  "run_id": "two_die_serial_contract_golden",
+  "example_only": true,
+  "fidelity": "ideal_serial_contract_golden",
+  "units": {"time": "ps", "bandwidth": "B/s", "payload": "byte"},
+  "workload_release_ps": 0,
+  "assumptions": [
+    "Synthetic contract example, not a gem5 or ASTRA-sim measurement.",
+    "All nodes execute serially; ideal payload service, no queueing or protocol overhead.",
+    "Destination capacity is reserved before transmission; each buffer has 4096 bytes.",
+    "Computed tensor contents are not numerically simulated.",
+    "This JSON is project IR, not native Timeloop, gem5 or Chakra input."
+  ],
+  "rank_map": {"0": "die0", "1": "die1"},
+  "ownership": {
+    "die0.core_private": "timeloop_core",
+    "die1.core_private": "timeloop_core",
+    "die0.local_path": "gem5",
+    "die1.local_path": "gem5",
+    "d2d.external_path": "astra_fabric"
+  },
+  "endpoints": {
+    "die0.mem": {"die": "die0", "kind": "memory", "buffer_capacity_bytes": 4096},
+    "die0.core": {"die": "die0", "kind": "compute", "buffer_capacity_bytes": 4096},
+    "die0.tx": {"die": "die0", "kind": "boundary_tx", "buffer_capacity_bytes": 4096},
+    "die1.rx": {"die": "die1", "kind": "boundary_rx", "buffer_capacity_bytes": 4096},
+    "die1.core": {"die": "die1", "kind": "compute", "buffer_capacity_bytes": 4096},
+    "die1.mem": {"die": "die1", "kind": "memory", "buffer_capacity_bytes": 4096}
+  },
+  "resources": {
+    "die0.compute_slot": {"owner": "timeloop_core", "scope_id": "die0.core_private", "capacity": 1},
+    "die1.compute_slot": {"owner": "timeloop_core", "scope_id": "die1.core_private", "capacity": 1},
+    "die0.noc": {"owner": "gem5", "scope_id": "die0.local_path", "capacity": 1},
+    "die1.noc": {"owner": "gem5", "scope_id": "die1.local_path", "capacity": 1},
+    "d2d.link01": {"owner": "astra_fabric", "scope_id": "d2d.external_path", "capacity": 1}
+  },
+  "nodes": [
+    {
+      "node_id": "load0", "kind": "local_transfer", "owner": "gem5",
+      "scope_id": "die0.local_path", "resource_id": "die0.noc", "deps": [], "release_ps": 0,
+      "src": "die0.mem", "dst": "die0.core", "payload_bytes": 1024,
+      "transfer_id": "input0", "chunk_id": 0, "tensor_id": "A0",
+      "bandwidth_Bps": 8000000000, "fixed_latency_ps": 0,
+      "completion_semantics": "destination_buffer_accepted", "golden_duration_ps": 128000
+    },
+    {
+      "node_id": "comp0", "kind": "compute", "owner": "timeloop_core",
+      "scope_id": "die0.core_private", "resource_id": "die0.compute_slot", "deps": ["load0"], "release_ps": 0,
+      "endpoint_id": "die0.core", "service_cycles": 1000, "clock_hz": 1000000000,
+      "service_time_scope": "core_private_only",
+      "included_components": ["die0.core_private"],
+      "excluded_components": ["die0.local_path", "d2d.external_path"],
+      "golden_duration_ps": 1000000
+    },
+    {
+      "node_id": "egress0", "kind": "local_transfer", "owner": "gem5",
+      "scope_id": "die0.local_path", "resource_id": "die0.noc", "deps": ["comp0"], "release_ps": 0,
+      "src": "die0.core", "dst": "die0.tx", "payload_bytes": 256,
+      "transfer_id": "x01", "chunk_id": 0, "tensor_id": "Y0",
+      "bandwidth_Bps": 8000000000, "fixed_latency_ps": 0,
+      "completion_semantics": "destination_buffer_accepted", "golden_duration_ps": 32000
+    },
+    {
+      "node_id": "fabric01", "kind": "fabric_transfer", "owner": "astra_fabric",
+      "scope_id": "d2d.external_path", "resource_id": "d2d.link01", "deps": ["egress0"], "release_ps": 0,
+      "src": "die0.tx", "dst": "die1.rx", "payload_bytes": 256,
+      "transfer_id": "x01", "chunk_id": 0, "tensor_id": "Y0",
+      "bandwidth_Bps": 16000000000, "fixed_latency_ps": 64000,
+      "completion_semantics": "destination_buffer_accepted", "golden_duration_ps": 80000
+    },
+    {
+      "node_id": "ingress1", "kind": "local_transfer", "owner": "gem5",
+      "scope_id": "die1.local_path", "resource_id": "die1.noc", "deps": ["fabric01"], "release_ps": 0,
+      "src": "die1.rx", "dst": "die1.core", "payload_bytes": 256,
+      "transfer_id": "x01", "chunk_id": 0, "tensor_id": "Y0",
+      "bandwidth_Bps": 8000000000, "fixed_latency_ps": 0,
+      "completion_semantics": "destination_buffer_accepted", "golden_duration_ps": 32000
+    },
+    {
+      "node_id": "comp1", "kind": "compute", "owner": "timeloop_core",
+      "scope_id": "die1.core_private", "resource_id": "die1.compute_slot", "deps": ["ingress1"], "release_ps": 0,
+      "endpoint_id": "die1.core", "service_cycles": 500, "clock_hz": 1000000000,
+      "service_time_scope": "core_private_only",
+      "included_components": ["die1.core_private"],
+      "excluded_components": ["die1.local_path", "d2d.external_path"],
+      "golden_duration_ps": 500000
+    },
+    {
+      "node_id": "store1", "kind": "local_transfer", "owner": "gem5",
+      "scope_id": "die1.local_path", "resource_id": "die1.noc", "deps": ["comp1"], "release_ps": 0,
+      "src": "die1.core", "dst": "die1.mem", "payload_bytes": 256,
+      "transfer_id": "output1", "chunk_id": 0, "tensor_id": "Y1",
+      "bandwidth_Bps": 8000000000, "fixed_latency_ps": 0,
+      "completion_semantics": "destination_buffer_accepted", "golden_duration_ps": 32000
+    }
+  ],
+  "expected": {
+    "completed_ps": {
+      "load0": 128000, "comp0": 1128000, "egress0": 1160000,
+      "fabric01": 1240000, "ingress1": 1272000, "comp1": 1772000, "store1": 1804000
+    },
+    "makespan_ps": 1804000,
+    "cross_die_payload_bytes": 256
+  }
+}
