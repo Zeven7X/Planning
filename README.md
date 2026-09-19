@@ -8,6 +8,7 @@
 | --- | --- |
 | [SIMD Die 平台仿真方案：L0 / L1](presentations/SIMD_Die平台仿真方案_L0_L1.pptx) | 最新汇报 PPT，26 页、25 个可编辑表格；平台架构、三方输入输出、数据包、复用与自研模块、HBM / memory 模型及阶段规划 |
 | [跨层仿真平台方案 v0.1](docs/跨层仿真平台方案_v0.1.md) | 初版详细方案：职责、接口契约、计账边界、平台串联、闭环与验收 |
+| [SimAI 对当前项目的参考总结](docs/SimAI对当前项目的参考总结.md) | SimAI 的计算、collective flow、网络模型及对 Timeloop / HeteroGarnet / ASTRA-sim 路线的借鉴建议 |
 | [接口样例说明](examples/two_die_contract/README.md) | 两 die、七节点串行人工样例的说明与运行方式 |
 | [contract_example.json](examples/two_die_contract/contract_example.json) | 平台中立的建议接口样例，不是仿真器原生格式 |
 | [validate_contract.py](examples/two_die_contract/validate_contract.py) | 静态契约与人工 golden 时间校验脚本 |
@@ -36,4 +37,3 @@ python validate_contract.py contract_example.json --self-test
 校验脚本不运行 Timeloop、gem5 或 ASTRA-sim，也不验证真实队列、credit、packet / flit 行为及 Chakra 转换。后续应锁定三方版本、落地适配器并执行联调验收。
 
 归档日期：2026-09-19。
-
